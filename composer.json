@@ -1,0 +1,24 @@
+{
+    "name": "ltxiong/locks",
+    "description": "基于php对常见的分布式锁方案封装",
+    "license": "none",
+    "keywords": [
+        "php",
+        "php lock",
+        "php 分布式锁"
+    ],
+    "authors": [
+        {
+            "name": "ltxiong",
+            "email": "ltx851201@yeah.net"
+        }
+    ],
+    "require": {
+        "php": ">=5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ltxiong\\Locks\\": "./src/"
+        }
+    }
+}
