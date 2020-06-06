@@ -5,6 +5,21 @@ namespace Ltxiong\Locks;
 /**
  * 基于Redis的分布式锁实现，Redis版本>=2.8，2.8以下无法直接使用此加锁方案
  * 
+ * 操作示例：
+ * $redis_conn = new Redis();
+ * $redis_conn->connect('127.0.0.1', 6379); // 连接Redis
+ * $lock_key = "test:lock:order:2020:06"; // 用于加锁的key
+ * $lock_value = time(); // 用于加锁的value
+ * $lock_args['lock_key'] = $lock_key;
+ * $lock_args['lock_value'] = "$lock_value";
+ * $lock_args['lock_timeout'] = 5; // 锁释放的超时时间 
+ * $r_lock = new RedisLock($redis_conn);  // 实例化加锁类
+ * $lock_rs = $lock->getLock($lock_args); // 加锁
+ * // 中间做自己的其它事情
+ * $redis_conn->set('rd_01', "hy_rd_01..$q.......", 3600);
+ * $redis_conn->get('rd_01');
+ * $release_lock_rs = $lock->releaseLock($lock_args); // 释放锁
+ * 
  */
 class RedisLock implements Locks
 {
