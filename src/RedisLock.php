@@ -32,7 +32,7 @@ class RedisLock implements Locks
     private $_rds_conn = null;
 
     /**
-     * 构造函数，实例化时需传入 Redis实例
+     * 构造函数，实例化时需传入 Redis实例，Redis实例必需为单实例而不是集群或主从(主从同时对外提供服务)
      *
      * @param [type] $redis_conn Redis实例
      */
