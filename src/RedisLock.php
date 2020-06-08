@@ -114,7 +114,7 @@ class RedisLock implements Locks
             $current_cache_value = $this->_rds_conn->get($lock_key);
             if($lock_value === $current_cache_value)
             {
-                $release_ok_num = $this->_rds_conn->delete($lock_key);
+                $release_ok_num = $this->_rds_conn->del($lock_key);
             }
         }
         catch(Exception $e)
