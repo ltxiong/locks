@@ -6,7 +6,6 @@
 基于ETCD相应的操作api如下示例：
 
 
-
 API接口响应通用参数列表
 
     etcd restful api接口正常响应 header 内容参数列表如下：
