@@ -52,7 +52,11 @@ class RedisLock implements Locks
      * 非必需参数列表
      *   $lock_args['lock_timeout']  type:int 锁超时时间，单位为秒，例如：3，如不传默认值为1
      * 
-     * @return bool 加锁成功与否
+     * @return array 加锁成功与否以及额外信息，返回的 参数列表如下所示：
+     *   $lock_data_arr['lock_ok']  type:bool 加锁成功与否，true:成功，false:失败
+     *   $lock_data_arr['error_msg']  type:string 加锁失败时，错误消息
+     *   $lock_data_arr['lock_ext_data']  type:array 加锁成功，返回的额外参数列表，如无额外参数列表，返回空数组
+     * 
      */
     public function getLock(array $lock_args)
     {
@@ -64,21 +68,32 @@ class RedisLock implements Locks
         {
             $lock_timeout = 1;
         }
-        $lock_ok = false;
+        $lock_data_arr = array(
+            'lock_ok' => false,
+            'error_msg' => '',
+            'lock_ext_data' => array()
+        );
         // 必需参数不满足加锁要求，直接返回加锁失败
         if(!($lock_key && $lock_value && $lock_timeout))
         {
             // 此处最好能够加一些日志输出和落地，加锁失败时，方便排查问题
-            return $lock_ok;
+            $lock_data_arr['error_msg'] = '10000:incorrect parameters';
+            return $lock_data_arr;
         }
         try
         {
-            $lock_ok = $this->_rds_conn->set($lock_key, $lock_value, array('nx', 'ex' => $lock_timeout)); 
+            $lock_ok = $this->_rds_conn->set($lock_key, $lock_value, array('nx', 'ex' => $lock_timeout));
+            if(!is_bool($lock_ok))
+            {
+                throw new Exception("10010: redis rs error");
+            }
+            // 加锁成功，将成功的结果赋值处理
+            $lock_data_arr['lock_ok'] = $lock_ok;
         }
         catch(Exception $e)
         {
             // 此处最好能够加一些日志，记录错误输出，方便排查加锁失败问题
-
+            $lock_data_arr['error_msg'] = $e->getMessage();
         }
         return $lock_ok;
     }
@@ -93,36 +108,48 @@ class RedisLock implements Locks
      *   $lock_args['lock_key']  type:string 加锁的key，例如：order:pay:lock
      *   $lock_args['lock_value']  type:string 用于加锁的具体值，例如：order-2020
      * 
-     * @return int 锁释放成功数量
+     * @return array 解锁成功与否以及额外信息，返回的 参数列表如下所示：
+     *   $release_lock_data_arr['release_lock_ok']  type:bool 解锁成功与否，true:成功，false:失败
+     *   $release_lock_data_arr['error_msg']  type:string 解锁失败时，错误消息
+     *   $release_lock_data_arr['release_lock_ext_data']  type:array 解锁成功，返回的额外参数列表，如无额外参数列表，返回空数组
+     * 
      */
     public function releaseLock(array $lock_args)
     {
         $lock_key = isset($lock_args['lock_key']) && $lock_args['lock_key'] ? $lock_args['lock_key'] : null;
-        $lock_value = isset($lock_args['lock_value']) ? $lock_args['lock_value'] : null;
-        // 锁释放成功数量 
-        $release_ok_num = 0;
+        $lock_value = isset($lock_args['lock_value']) ? $lock_args['lock_value'] : '';
+        $release_lock_data_arr = array(
+            'release_lock_ok' => false,
+            'error_msg' => '',
+            'release_lock_ext_data' => ''
+        );
         // 必需参数不满足释放锁要求，直接返回失败
         if(!($lock_key && $lock_value))
         {
-            // 此处最好能够加一些日志输出和落地，释放锁失败时， 方便排查问题
-            return $release_ok_num;
+            // 此处最好能够加一些日志输出和落地，加锁失败时，方便排查问题
+            $release_lock_data_arr['error_msg'] = '10000:incorrect parameters';
+            return $release_lock_data_arr;
         }
         // 释放锁时，要注意一下，只有锁的key value完全相等时才进行释放
         try
         {
             // 当前从缓存当中获取到的值最好记录一下日志，方便问题排查
             $current_cache_value = $this->_rds_conn->get($lock_key);
-            if($lock_value === $current_cache_value)
+            // 查询当前key时，如相应key无法查询到值，返回的是 false，key没有相应的值存在，说明已自动过期自动释放锁
+            if($current_cache_value !== false && $lock_value !== $current_cache_value)
             {
-                $release_ok_num = $this->_rds_conn->del($lock_key);
+                throw new Exception('20010:error value');
             }
+            // 有可能进行删除操作时此内容已过期，删除操作失效
+            $this->_rds_conn->del($lock_key);
+            $release_lock_data_arr['release_lock_ok'] = true;
         }
         catch(Exception $e)
         {
             // 此处最好能够加一些日志，记录错误输出，方便排查加锁失败问题
-            
+            $release_lock_data_arr['error_msg'] = $e->getMessage();
         }
-        return $release_ok_num;
+        return $release_lock_data_arr;
         
     }
 }

@@ -6,6 +6,7 @@
 基于ETCD相应的操作api如下示例：
 
 
+
 API接口响应通用参数列表
 
     etcd restful api接口正常响应 header 内容参数列表如下：
@@ -37,8 +38,38 @@ curl http://127.0.0.1:2379/v3/lease/grant -X POST -d '{"TTL": 60, "ID": 15916005
     "TTL":"60"
 }
 
+
+// 加锁/释放锁请求的api参考： https://github.com/etcd-io/etcd/blob/master/etcdserver/api/v3lock/v3lockpb/v3lock.proto
+// 加锁/释放锁参数列表参考： https://etcd.io/docs/v3.3.12/dev-guide/api_concurrency_reference_v3/
+
+// 加锁
+curl http://127.0.0.1:2379/v3/lock/lock -X POST -d '{"name": "YWJj", "lease": 1591600570}'
+响应结果如下：
+{
+    "header":{
+        "cluster_id":"5588143592968007030",
+        "member_id":"1315068946984511305",
+        "revision":"28",
+        "raft_term":"9"
+    },
+    "key":"YWJjLzVlZGRlNWJh"
+}
+
+// 释放锁
+curl http://127.0.0.1:2379/v3/lock/unlock -X POST -d '{"key": "YWJjLzVlZGRlNWJh"}'
+响应结果如下：
+{
+    "header":{
+        "cluster_id":"5588143592968007030",
+        "member_id":"1315068946984511305",
+        "revision":"29",
+        "raft_term":"9"
+    }
+}
+
 // 通过key-value方式写入一个带过期时间的租约key-value
 curl http://127.0.0.1:2379/v3/kv/put -X POST -d '{"key": "YWJj", "value": "bHR4aW9uZzEyMzQ=", "lease": 1591600570}'
+curl http://127.0.0.1:2379/v3/kv/put -X POST -d '{"key": "YWJj", "value": "a2tr", "lease": 1591600570}'
 响应结果如下：
 {
     "header":{
