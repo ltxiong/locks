@@ -15,8 +15,7 @@
     ],
 
     "require": {
-        "php": ">=5.6",
-        "linkorb/etcd-php": "^1.6.1"
+        "php": ">=5.6"
     },
     
     "autoload": {
