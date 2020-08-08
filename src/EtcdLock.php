@@ -4,7 +4,7 @@ namespace Ltxiong\Locks;
 use Ltxiong\Locks\Tool;
 
 /**
- * 基于ETCD的分布式锁实现，使用前，先搭建好etcd集群并启动相应服务
+ * 基于 ETCD的分布式锁实现，使用前，先搭建好etcd集群并启动相应服务
  * 
  * 可以参考：https://segmentfault.com/a/1190000021603215?utm_source=tag-newest
  * etcd api参数列表 参考： https://etcd.io/docs/v3.4.0/learning/api/#requests-and-responses
