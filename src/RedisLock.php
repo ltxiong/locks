@@ -95,7 +95,7 @@ class RedisLock implements Locks
             // 此处最好能够加一些日志，记录错误输出，方便排查加锁失败问题
             $lock_data_arr['error_msg'] = $e->getMessage();
         }
-        return $lock_ok;
+        return $lock_data_arr;
     }
 
     /**
@@ -133,16 +133,11 @@ class RedisLock implements Locks
         // 释放锁时，要注意一下，只有锁的key value完全相等时才进行释放
         try
         {
-            // 当前从缓存当中获取到的值最好记录一下日志，方便问题排查
-            $current_cache_value = $this->_rds_conn->get($lock_key);
-            // 查询当前key时，如相应key无法查询到值，返回的是 false，key没有相应的值存在，说明已自动过期自动释放锁
-            if($current_cache_value !== false && $lock_value !== $current_cache_value)
-            {
-                throw new Exception('20010:error value');
-            }
-            // 有可能进行删除操作时此内容已过期，删除操作失效
-            $this->_rds_conn->del($lock_key);
-            $release_lock_data_arr['release_lock_ok'] = true;
+            // 执行lua脚本释放锁，确保原子性操作
+            $script = 'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end';
+            $delRs = $this->_rds_conn->eval($script, [$lock_key, $lock_value], 1);
+            $delRs = intval($delRs);
+            $release_lock_data_arr['release_lock_ok'] = $delRs > 0 ? true : false;
         }
         catch(Exception $e)
         {
