@@ -134,7 +134,7 @@ class RedisLock implements Locks
         try
         {
             // 执行lua脚本释放锁，确保原子性操作
-            $script = 'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end';
+            $script = 'if redis.call("GET", KEYS[1]) == ARGV[1] then return redis.call("DEL", KEYS[1]) else return 0 end';
             $delRs = $this->_rds_conn->eval($script, [$lock_key, $lock_value], 1);
             $delRs = intval($delRs);
             $release_lock_data_arr['release_lock_ok'] = $delRs > 0 ? true : false;
